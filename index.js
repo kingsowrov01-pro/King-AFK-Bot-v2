@@ -637,23 +637,29 @@ function startLookAround(bot) {
 // CUSTOM MODULES
 // ============================================================
 
-// Avoid mobs/players
+// Avoid mobs only
 function avoidMobs(bot) {
   const safeDistance = 5;
+
   addInterval(() => {
-    if (!bot || !botState.connected) return;
+    if (!bot || !botState.connected || !bot.entity) return;
+
     try {
+      // Only avoid mobs — players are NOT included
       const entities = Object.values(bot.entities).filter(e =>
-        e.type === 'mob' || (e.type === 'player' && e.username !== bot.username)
+        e.type === 'mob' && e.position
       );
+
       for (const e of entities) {
-        if (!e.position) continue;
         const distance = bot.entity.position.distanceTo(e.position);
+
         if (distance < safeDistance) {
           bot.setControlState('back', true);
+
           setTimeout(() => {
             if (bot) bot.setControlState('back', false);
           }, 500);
+
           break;
         }
       }
@@ -663,37 +669,96 @@ function avoidMobs(bot) {
   }, 2000);
 }
 
-// Combat module
+
+// Combat module - Find, follow and attack players
 function combatModule(bot, mcData) {
+  const DETECT_RANGE = 100;
+  const ATTACK_RANGE = 3.2;
+
   addInterval(() => {
-    if (!bot || !botState.connected) return;
+    if (!bot || !botState.connected || !bot.entity) return;
+
     try {
+      // Find nearby players except the bot itself
+      const players = Object.values(bot.entities).filter(e =>
+        e.type === 'player' &&
+        e.username &&
+        e.username !== bot.username &&
+        e.position &&
+        bot.entity.position.distanceTo(e.position) <= DETECT_RANGE
+      );
+
+      if (players.length > 0) {
+        // Find nearest player
+        players.sort((a, b) =>
+          bot.entity.position.distanceTo(a.position) -
+          bot.entity.position.distanceTo(b.position)
+        );
+
+        const target = players[0];
+        const distance = bot.entity.position.distanceTo(target.position);
+
+        // Look at player
+        bot.lookAt(target.position.offset(0, 1.2, 0), true)
+          .catch(() => {});
+
+        if (distance > ATTACK_RANGE) {
+          // Go toward player
+          bot.pathfinder.setGoal(
+            new goals.GoalNear(
+              Math.floor(target.position.x),
+              Math.floor(target.position.y),
+              Math.floor(target.position.z),
+              2
+            )
+          );
+        } else {
+          // Close enough → stop pathfinding and attack
+          bot.pathfinder.setGoal(null);
+          bot.attack(target);
+          botState.lastActivity = Date.now();
+        }
+
+        return;
+      }
+
+      // No player nearby → attack mobs if enabled
       if (config.combat['attack-mobs']) {
         const mobs = Object.values(bot.entities).filter(e =>
-          e.type === 'mob' && e.position &&
+          e.type === 'mob' &&
+          e.position &&
           bot.entity.position.distanceTo(e.position) < 4
         );
+
         if (mobs.length > 0) {
           bot.attack(mobs[0]);
+          botState.lastActivity = Date.now();
         }
       }
+
     } catch (e) {
       console.log('[Combat] Error:', e.message);
     }
-  }, 1500);
+  }, 500);
 
+
+  // ---------- AUTO EAT ----------
   bot.on('health', () => {
     if (!config.combat['auto-eat']) return;
+
     try {
       if (bot.food < 14) {
         const food = bot.inventory.items().find(i => {
           const itemData = mcData.itemsByName[i.name];
           return itemData && itemData.food;
         });
+
         if (food) {
           bot.equip(food, 'hand')
             .then(() => bot.consume())
-            .catch(e => console.log('[AutoEat] Error:', e.message));
+            .catch(e =>
+              console.log('[AutoEat] Error:', e.message)
+            );
         }
       }
     } catch (e) {
