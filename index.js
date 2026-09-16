@@ -541,9 +541,9 @@ bot.on('messagestr', (msg) => {
   }
 
   // ---------- MOVEMENT MODULES ----------
-  if (config.movement['circle-walk'].enabled) {
-    startCircleWalk(bot, defaultMove);
-  }
+  // if (config.movement['circle-walk'].enabled) {
+//   startCircleWalk(bot, defaultMove);
+// }
   if (config.movement['random-jump'].enabled) {
     startRandomJump(bot);
   }
