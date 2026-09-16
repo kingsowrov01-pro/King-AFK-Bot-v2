@@ -750,7 +750,55 @@ function bedModule(bot, mcData) {
     }
   }, 10000);
 }
+// ============================================================
+// AUTO CHAT MESSAGES / QUEUE COMMANDS
+// ============================================================
+function chatMessagesModule(bot) {
+  const settings = config.utils['chat-messages'];
 
+  if (!settings || !settings.enabled) {
+    console.log('[ChatMessages] Disabled');
+    return;
+  }
+
+  if (!settings.messages || settings.messages.length === 0) {
+    console.log('[ChatMessages] No messages configured');
+    return;
+  }
+
+  let index = 0;
+
+  const sendNext = () => {
+    if (!bot || !botState.connected) return;
+
+    const message = settings.messages[index];
+
+    try {
+      bot.chat(message);
+      console.log(`[ChatMessages] Sent: ${message}`);
+      botState.lastActivity = Date.now();
+
+      index++;
+
+      if (index >= settings.messages.length) {
+        if (settings.repeat) {
+          index = 0;
+        } else {
+          return;
+        }
+      }
+    } catch (e) {
+      console.log('[ChatMessages] Error:', e.message);
+    }
+  };
+
+  // First message 5 seconds after spawn
+  setTimeout(sendNext, 5000);
+
+  if (settings.repeat) {
+    addInterval(sendNext, settings['repeat-delay']);
+  }
+}
 // Chat module
 function chatModule(bot) {
   bot.on('chat', (username, message) => {
