@@ -575,6 +575,7 @@ bot.on('messagestr', (msg) => {
   if (config.modules.combat) combatModule(bot, mcData);
   if (config.modules.beds) bedModule(bot, mcData);
   if (config.modules.chat) chatModule(bot);
+  if (config.utils['chat-messages'].enabled) chatMessagesModule(bot);
 
   // Periodic Rejoin
   if (config.utils['periodic-rejoin'] && config.utils['periodic-rejoin'].enabled) {
