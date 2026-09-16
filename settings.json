@@ -28,7 +28,7 @@
     "chat-messages": {
       "enabled": true,
       "repeat": true,
-      "repeat-delay": 15000,
+      "repeat-delay": 10000,
       "messages": [
         "I'm a Bot PvP player",
         "Subscribe to kingsowrov!",
