@@ -413,15 +413,7 @@ function createBot() {
     console.log('[Auth] Register detected');
   }
 
-  // Creative mode success
-  if (
-    message.includes('commands.gamemode.success.self') ||
-    message.includes('set own game mode to creative mode')
-  ) {
-    console.log('[INFO] Bot is now in Creative Mode.');
-
-    bot.chat('/gamerule sendCommandFeedback false');
-  }
+  
 });
 
       if (config.discord && config.discord.events.connect) {
@@ -434,18 +426,7 @@ const defaultMove = new Movements(bot, mcData);
 initializeModules(bot, mcData, defaultMove);
 setupLeaveRejoin(bot, createBot);
 
-setTimeout(() => {
-  if (bot && botState.connected) {
-    bot.chat('/gamerule sendCommandFeedback false');
-  }
-}, 3000);
 
-setTimeout(() => {
-  if (bot && botState.connected) {
-    bot.chat('/gamemode creative');
-    console.log('[INFO] Attempted to set creative mode (requires OP)');
-  }
-}, 3000);
 
 });
 
