@@ -28,11 +28,18 @@
     "chat-messages": {
       "enabled": true,
       "repeat": true,
-      "repeat-delay": 500,
+      "repeat-delay": 60000,
       "messages": [
         "I'm a regular player",
         "Subscribe to kingsowrov!",
         "I like to play Minecraft!"
+        "/queue join Axe",
+        "/queue join Mace",
+        "/queue join Netherite-Pot",
+        "/queue join OP",
+        "/queue join SMP",
+        "/queue join Spear",
+        "/queue join Sword"
       ]
     },
     "chat-log": true,
