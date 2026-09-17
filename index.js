@@ -675,6 +675,19 @@ function combatModule(bot, mcData) {
   const DETECT_RANGE = 100;
   const ATTACK_RANGE = 3.2;
 
+  // ---------- ALWAYS SELECT SLOT 1 ----------
+  function selectSlot1() {
+    if (!bot || !bot.entity) return;
+
+    try {
+      if (bot.quickBarSlot !== 0) {
+        bot.setQuickBarSlot(0);
+      }
+    } catch (e) {
+      console.log('[Hotbar] Error:', e.message);
+    }
+  }
+
   addInterval(() => {
     if (!bot || !botState.connected || !bot.entity) return;
 
@@ -699,8 +712,10 @@ function combatModule(bot, mcData) {
         const distance = bot.entity.position.distanceTo(target.position);
 
         // Look at player
-        bot.lookAt(target.position.offset(0, 1.2, 0), true)
-          .catch(() => {});
+        bot.lookAt(
+          target.position.offset(0, 1.2, 0),
+          true
+        ).catch(() => {});
 
         if (distance > ATTACK_RANGE) {
           // Go toward player
@@ -713,9 +728,15 @@ function combatModule(bot, mcData) {
             )
           );
         } else {
-          // Close enough → stop pathfinding and attack
+          // Close enough → stop pathfinding
           bot.pathfinder.setGoal(null);
+
+          // ALWAYS use Slot 1 for attacking
+          selectSlot1();
+
+          // Attack with Slot 1 weapon
           bot.attack(target);
+
           botState.lastActivity = Date.now();
         }
 
@@ -731,6 +752,9 @@ function combatModule(bot, mcData) {
         );
 
         if (mobs.length > 0) {
+          // Use Slot 1 for mob attack too
+          selectSlot1();
+
           bot.attack(mobs[0]);
           botState.lastActivity = Date.now();
         }
@@ -756,6 +780,10 @@ function combatModule(bot, mcData) {
         if (food) {
           bot.equip(food, 'hand')
             .then(() => bot.consume())
+            .then(() => {
+              // After eating → return to Slot 1
+              selectSlot1();
+            })
             .catch(e =>
               console.log('[AutoEat] Error:', e.message)
             );
